@@ -37,6 +37,7 @@ export interface SheetScreenProps {
   customBackground?: React.ReactNode
   detents?: Detent[]
   initialDetent?: 'large' | 'medium' | 'small'
+  isScrollable?: boolean
 }
 
 export interface Detent {

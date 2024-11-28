@@ -23,6 +23,7 @@ interface Props {
   dragThreshold?: number
   springConfig?: SpringConfig
   dragDirections?: DragDirections
+  isScrollable?: boolean
   style?: any
   opacityOnGestureMove?: boolean
   containerRadiusSync?: boolean
@@ -56,6 +57,7 @@ export function SheetScreen({
     toLeft: false,
     toRight: false
   },
+  isScrollable = false,
   style,
   opacityOnGestureMove = false,
   containerRadiusSync = true,
@@ -115,6 +117,12 @@ export function SheetScreen({
     return () => setScale(1)
   }, [scaleFactor, resizeType, shouldEnableScale])
 
+  const effectiveDragDirections = React.useMemo(() => ({
+    ...dragDirections,
+    toTop: isScrollable ? false : dragDirections.toTop,
+    toBottom: isScrollable ? false : dragDirections.toBottom,
+  }), [dragDirections, isScrollable])
+
   const panGesture = React.useMemo(
     () => Gesture.Pan()
       .onStart(() => {
@@ -128,23 +136,23 @@ export function SheetScreen({
         if (!isMounted.value) return
         const { translationX, translationY } = event
 
-        if (dragDirections.toBottom || dragDirections.toTop) {
-          if ((dragDirections.toBottom && translationY > 0) || 
-              (dragDirections.toTop && translationY < 0)) {
+        if (effectiveDragDirections.toBottom || effectiveDragDirections.toTop) {
+          if ((effectiveDragDirections.toBottom && translationY > 0) || 
+              (effectiveDragDirections.toTop && translationY < 0)) {
             translateY.value = translationY
           }
         }
         
-        if (dragDirections.toRight || dragDirections.toLeft) {
-          if ((dragDirections.toRight && translationX > 0) || 
-              (dragDirections.toLeft && translationX < 0)) {
+        if (effectiveDragDirections.toRight || effectiveDragDirections.toLeft) {
+          if ((effectiveDragDirections.toRight && translationX > 0) || 
+              (effectiveDragDirections.toLeft && translationX < 0)) {
             translateX.value = translationX
           }
         }
 
         const translation = Math.max(
-          dragDirections.toBottom || dragDirections.toTop ? Math.abs(translationY) : 0,
-          dragDirections.toLeft || dragDirections.toRight ? Math.abs(translationX) : 0
+          effectiveDragDirections.toBottom || effectiveDragDirections.toTop ? Math.abs(translationY) : 0,
+          effectiveDragDirections.toLeft || effectiveDragDirections.toRight ? Math.abs(translationX) : 0
         )
         
         const willClose = translation > dragThreshold
@@ -158,7 +166,7 @@ export function SheetScreen({
           }
         }
 
-        const progress = Math.min(translation / (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1)
+        const progress = Math.min(translation / (effectiveDragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1)
         
         if (!disableSyncScaleOnDragDown && shouldEnableScale) {
           const newScale = resizeType === 'incremental' 
@@ -184,10 +192,10 @@ export function SheetScreen({
         const translation = Math.max(Math.abs(translationX), Math.abs(translationY))
         
         const isClosingAllowed = (
-          (translationY > 0 && dragDirections.toBottom) ||
-          (translationY < 0 && dragDirections.toTop) ||
-          (translationX > 0 && dragDirections.toRight) ||
-          (translationX < 0 && dragDirections.toLeft)
+          (translationY > 0 && effectiveDragDirections.toBottom) ||
+          (translationY < 0 && effectiveDragDirections.toTop) ||
+          (translationX > 0 && effectiveDragDirections.toRight) ||
+          (translationX < 0 && effectiveDragDirections.toLeft)
         )
 
         const shouldClose = 
@@ -197,12 +205,12 @@ export function SheetScreen({
           )
         
         if (shouldClose) {
-          const finalTranslation = dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH
-          translateY.value = withSpring(dragDirections.toBottom ? finalTranslation : 0, {
+          const finalTranslation = effectiveDragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH
+          translateY.value = withSpring(effectiveDragDirections.toBottom ? finalTranslation : 0, {
             velocity: velocityY,
             ...springConfig
           })
-          translateX.value = withSpring(dragDirections.toRight ? finalTranslation : 0, {
+          translateX.value = withSpring(effectiveDragDirections.toRight ? finalTranslation : 0, {
             velocity: velocityX,
             ...springConfig
           })
@@ -228,7 +236,7 @@ export function SheetScreen({
           }
         }
       })
-    , [dragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale]
+    , [effectiveDragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale]
   )
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -236,7 +244,7 @@ export function SheetScreen({
     
     const scale = disableSheetContentResizeOnDragDown ? 1 : interpolate(
       Math.max(Math.abs(translateY.value), Math.abs(translateX.value)),
-      [0, dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH],
+      [0, effectiveDragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH],
       resizeType === 'incremental' ? [1.15, 1] : [1, 0.85],
       Extrapolate.CLAMP
     )
