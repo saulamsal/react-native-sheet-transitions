@@ -26,10 +26,10 @@ export function SheetScreen({
     mass: 0.8,
   },
   dragDirections = {
-    top: false,
-    bottom: true,
-    left: false,
-    right: false
+    toTop: false,
+    toBottom: true,
+    toLeft: false,
+    toRight: false
   },
   style,
   opacityOnGestureMove = false,
@@ -51,7 +51,7 @@ export function SheetScreen({
   const animatedStyle = useAnimatedStyle(() => {
     const scale = interpolate(
       Math.max(Math.abs(translateY.value), Math.abs(translateX.value)),
-      [0, dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH],
+      [0, dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH],
       resizeType === 'incremental' 
         ? [1.15, 1] // Start big, scale down to normal
         : [1, 0.85], // Start normal, scale down
@@ -61,7 +61,7 @@ export function SheetScreen({
     // Calculate progress for border radius
     const progress = Math.min(
       Math.max(Math.abs(translateY.value), Math.abs(translateX.value)) / 
-      (dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH),
+      (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH),
       1
     )
     
@@ -77,8 +77,8 @@ export function SheetScreen({
     
     return {
       transform: [
-        { translateY: dragDirections.bottom || dragDirections.top ? translateY.value : 0 },
-        { translateX: dragDirections.left || dragDirections.right ? translateX.value : 0 },
+        { translateY: dragDirections.toBottom || dragDirections.toTop ? translateY.value : 0 },
+        { translateX: dragDirections.toLeft || dragDirections.toRight ? translateX.value : 0 },
         { scale }
       ],
       opacity: opacity.value,
@@ -97,21 +97,21 @@ export function SheetScreen({
       'worklet'
       const { translationX, translationY } = event
 
-      if (dragDirections.bottom && translationY > 0) {
+      if (dragDirections.toBottom && translationY > 0) {
         translateY.value = translationY
-      } else if (dragDirections.top && translationY < 0) {
+      } else if (dragDirections.toTop && translationY < 0) {
         translateY.value = translationY
       }
 
-      if (dragDirections.right && translationX > 0) {
+      if (dragDirections.toRight && translationX > 0) {
         translateX.value = translationX
-      } else if (dragDirections.left && translationX < 0) {
+      } else if (dragDirections.toLeft && translationX < 0) {
         translateX.value = translationX
       }
 
       const progress = Math.min(
         Math.max(Math.abs(translationY), Math.abs(translationX)) / 
-        (dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH),
+        (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH),
         1
       )
       
@@ -142,12 +142,12 @@ export function SheetScreen({
         (velocity > 500 && translation > 50)
       
       if (shouldClose) {
-        const finalTranslation = dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH
-        translateY.value = withSpring(dragDirections.bottom ? finalTranslation : 0, {
+        const finalTranslation = dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH
+        translateY.value = withSpring(dragDirections.toBottom ? finalTranslation : 0, {
           velocity: velocityY,
           ...springConfig
         })
-        translateX.value = withSpring(dragDirections.right ? finalTranslation : 0, {
+        translateX.value = withSpring(dragDirections.toRight ? finalTranslation : 0, {
           velocity: velocityX,
           ...springConfig
         })

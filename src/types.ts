@@ -1,17 +1,16 @@
 import type { ViewStyle } from 'react-native'
 
 export interface SpringConfig {
-  damping?: number
-  stiffness?: number
-  mass?: number
-  velocity?: number
+  damping: number
+  stiffness: number
+  mass: number
 }
 
 export interface DragDirections {
-  top?: boolean
-  bottom?: boolean
-  left?: boolean
-  right?: boolean
+  toTop: boolean
+  toBottom: boolean
+  toLeft: boolean
+  toRight: boolean
 }
 
 export type ResizeType = 'incremental' | 'decremental'

@@ -1,128 +1,105 @@
-# React Native Sheet Transitions 🎭
+# React Native Sheet Transitions
 
-Beautiful iOS-like sheet transitions for React Native and Expo apps. Provides smooth, native-feeling modal transitions with gesture-based interactions.
+Native-feeling sheet transitions for React Native, powered by Reanimated 3.
 
-## Features ✨
-
-- 🔄 Smooth scale transitions
-- 👆 Gesture-based dismissal
-- 📱 iOS-like modal animations
-- 🎨 Customizable animations
-- 🌗 Two animation modes: incremental & decremental
-- 🎯 Border radius sync with gestures
-- 🔍 Opacity animations
-- 📐 Multi-directional dragging support
-
-## Installation 📦
+## Installation
 
 ```bash
 npm install react-native-sheet-transitions
-# or
-yarn add react-native-sheet-transitions
-# or
-bun add react-native-sheet-transitions
 ```
 
-### Peer Dependencies
+Required peer dependencies:
 
 ```bash
 npm install react-native-reanimated react-native-gesture-handler
 ```
 
-## Basic Usage 🚀
-
-1. Wrap your app with `SheetProvider`:
+## Usage
 
 ```tsx
-import { SheetProvider } from 'react-native-sheet-transitions'
+import { SheetProvider, SheetScreen } from 'react-native-sheet-transitions'
 
-export default function App() {
+// Wrap app with provider
+function App() {
   return (
     <SheetProvider>
       <Navigation />
     </SheetProvider>
   )
 }
-```
 
-2. Use `SheetScreen` in your modal:
-
-```tsx
-import { SheetScreen } from 'react-native-sheet-transitions'
-
-export default function ModalScreen() {
-  const router = useRouter()
-  
+// Use in modal screens
+function ModalScreen() {
   return (
-    <SheetScreen 
-      onClose={() => router.back()}
-      dragDirections={{ bottom: true }}
-      opacityOnGestureMove={true}
-      containerRadiusSync={true}
+    <SheetScreen
+      onClose={() => navigation.goBack()}
+      dragDirections={{
+        toBottom: true,
+        toTop: false,
+        toLeft: false,
+        toRight: false
+      }}
     >
-      <YourContent />
+      <Content />
     </SheetScreen>
   )
 }
 ```
 
-## API Reference 📚
+## API
 
-### SheetProvider Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `springConfig` | `SpringConfig` | `{ damping: 15, stiffness: 150, mass: 0.5 }` | Spring animation configuration |
-| `resizeType` | `'incremental' \| 'decremental'` | `'decremental'` | Scale animation mode |
-
-### SheetScreen Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `onClose` | `() => void` | required | Callback when sheet is dismissed |
-| `scaleFactor` | `number` | `0.83` | Scale factor for background content |
-| `dragThreshold` | `number` | `150` | Distance required to trigger dismiss |
-| `springConfig` | `SpringConfig` | `{ damping: 20, stiffness: 90, mass: 0.8 }` | Spring animation config |
-| `dragDirections` | `DragDirections` | `{ bottom: true }` | Enabled drag directions |
-| `opacityOnGestureMove` | `boolean` | `false` | Enable opacity animation during drag |
-| `containerRadiusSync` | `boolean` | `true` | Sync border radius with drag |
-| `initialBorderRadius` | `number` | `50` | Initial border radius value |
-| `style` | `ViewStyle` | undefined | Additional container styles |
-
-### Types
+### SheetProvider
 
 ```tsx
-interface SpringConfig {
-  damping?: number
-  stiffness?: number
-  mass?: number
-  velocity?: number
+interface SheetProviderProps {
+  springConfig?: SpringConfig // Animation config
+  resizeType?: 'incremental' | 'decremental' // Scale direction
+}
+```
+
+### SheetScreen
+
+```tsx
+interface SheetScreenProps {
+  onClose: () => void // Dismiss callback
+  scaleFactor?: number // Background scale (default: 0.83)
+  dragThreshold?: number // Dismiss threshold (default: 150)
+  springConfig?: SpringConfig // Animation config
+  dragDirections?: DragDirections // Enabled directions
+  opacityOnGestureMove?: boolean // Fade while dragging
+  containerRadiusSync?: boolean // Sync radius with gesture
+  initialBorderRadius?: number // Starting radius
+  style?: ViewStyle // Container styles
 }
 
 interface DragDirections {
-  top?: boolean
-  bottom?: boolean
-  left?: boolean
-  right?: boolean
+  toTop: boolean
+  toBottom: boolean  
+  toLeft: boolean
+  toRight: boolean
+}
+
+interface SpringConfig {
+  damping: number
+  stiffness: number
+  mass: number
 }
 ```
 
-## Advanced Usage 🔧
+## Examples
 
-### Incremental Scale Mode
-
-Background scales up instead of down:
+### Basic Modal
 
 ```tsx
-<SheetProvider resizeType="incremental">
-  <App />
-</SheetProvider>
+<SheetScreen onClose={handleClose}>
+  <Content />
+</SheetScreen>
 ```
 
-### Custom Animation Config
+### Custom Animation
 
 ```tsx
-<SheetScreen 
+<SheetScreen
   springConfig={{
     damping: 15,
     stiffness: 120,
@@ -130,21 +107,20 @@ Background scales up instead of down:
   }}
   scaleFactor={0.85}
   dragThreshold={100}
-  opacityOnGestureMove={true}
-  containerRadiusSync={true}
-  initialBorderRadius={40}
 >
   <Content />
 </SheetScreen>
 ```
 
-### Multi-directional Dragging
+### Multi-Direction
 
 ```tsx
-<SheetScreen 
+<SheetScreen
   dragDirections={{
-    bottom: true,
-    right: true
+    toTop: true,
+    toBottom: true,
+    toLeft: true,
+    toRight: true
   }}
   onClose={handleClose}
 >
@@ -152,50 +128,6 @@ Background scales up instead of down:
 </SheetScreen>
 ```
 
-## Expo Router Integration 🔗
+## License
 
-Configure your modal screen:
-
-```tsx
-// app/_layout.tsx
-import { Stack } from 'expo-router'
-import { SheetProvider } from 'react-native-sheet-transitions'
-
-export default function Layout() {
-  return (
-    <SheetProvider>
-      <Stack>
-        <Stack.Screen name="index" />
-        <Stack.Screen 
-          name="modal" 
-          options={{
-            presentation: 'transparentModal',
-            contentStyle: { backgroundColor: 'transparent' }
-          }}
-        />
-      </Stack>
-    </SheetProvider>
-  )
-}
-```
-
-## Performance Tips 🚀
-
-1. Use `memo` for complex modal content
-2. Keep animations smooth by avoiding heavy computations during gestures
-3. Use `useCallback` for event handlers
-4. Consider using `worklet` functions for performance-critical animations
-
-## Contributing 🤝
-
-Pull requests are welcome! For major changes:
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
-
-## License 📄
-
-MIT © saulamsal
+MIT
