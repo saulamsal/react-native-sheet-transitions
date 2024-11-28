@@ -1,6 +1,7 @@
 import React from 'react';
+import Animated from 'react-native-reanimated';
 interface SheetContextType {
-    scale: number;
+    scale: Animated.SharedValue<number>;
     setScale: (scale: number) => void;
     resizeType: 'incremental' | 'decremental';
     isWebEnabled: boolean;

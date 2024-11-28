@@ -1,11 +1,18 @@
-import React, { createContext, useContext, useState } from 'react'
+import React, { createContext, useContext, useCallback, useEffect } from 'react'
 import { Platform } from 'react-native'
+import Animated, { 
+  useSharedValue, 
+  withSpring,
+  useAnimatedStyle,
+  cancelAnimation,
+  runOnJS
+} from 'react-native-reanimated'
 
 interface SheetContextType {
-  scale: number
+  scale: Animated.SharedValue<number>
   setScale: (scale: number) => void
   resizeType: 'incremental' | 'decremental'
-  isWebEnabled: boolean
+  enableForWeb: boolean
 }
 
 interface SheetProviderProps {
@@ -21,24 +28,67 @@ export function SheetProvider({
   resizeType = 'decremental',
   enableForWeb = false 
 }: SheetProviderProps) {
-  const [scale, setScale] = useState(1)
-  const isWebEnabled = Platform.OS === 'web' ? enableForWeb : true
+  const scale = useSharedValue(1)
+  const isMounted = useSharedValue(false)
+  
+  useEffect(() => {
+    // Delay setting isMounted to ensure view is ready
+    requestAnimationFrame(() => {
+      isMounted.value = true
+    })
+    
+    return () => {
+      isMounted.value = false
+      cancelAnimation(scale)
+    }
+  }, [])
 
-  if (Platform.OS === 'web' && enableForWeb && __DEV__) {
-    console.warn(
-      '[SheetProvider] Sheet transitions on web are not recommended for optimal UX. ' +
-      'Consider using native web modals or dialogs for better accessibility and user experience.'
-    )
-  }
+  const setScale = useCallback((newScale: number) => {
+    if (!isMounted.value) return
+    
+    if (Platform.OS === 'android') {
+      scale.value = newScale
+      return
+    }
+    
+    scale.value = withSpring(newScale, {
+      damping: 20,
+      stiffness: 300,
+      mass: 0.3,
+      restDisplacementThreshold: 0.01,
+      restSpeedThreshold: 0.01,
+    })
+  }, [])
+
+  const animatedStyle = useAnimatedStyle(() => {
+    if (!isMounted.value) return {}
+    
+    return {
+      transform: [{ scale: scale.value }],
+    }
+  }, [])
+
+  const isEnabled = Platform.OS === 'web' ? enableForWeb : true
 
   return (
     <SheetContext.Provider value={{ 
       scale, 
       setScale, 
       resizeType,
-      isWebEnabled 
+      enableForWeb: isEnabled
     }}>
-      <>{children}</>
+      <Animated.View 
+        style={[
+          { 
+            flex: 1,
+            backfaceVisibility: 'hidden',
+          },
+          Platform.OS === 'ios' ? animatedStyle : null
+        ]}
+        collapsable={false}
+      >
+        {children}
+      </Animated.View>
     </SheetContext.Provider>
   )
 }

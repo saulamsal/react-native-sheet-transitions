@@ -6,7 +6,8 @@ import Animated, {
   withSpring, 
   interpolate,
   Extrapolate,
-  runOnJS
+  runOnJS,
+  cancelAnimation
 } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { useSheet } from './SheetProvider'
@@ -43,9 +44,11 @@ export function SheetScreen({
   scaleFactor = 0.83,
   dragThreshold = 150,
   springConfig = {
-    damping: 20,
-    stiffness: 90,
-    mass: 0.8,
+    damping: 15,
+    stiffness: 60,
+    mass: 0.6,
+    restDisplacementThreshold: 0.01,
+    restSpeedThreshold: 0.01,
   },
   dragDirections = {
     toTop: false,
@@ -67,15 +70,33 @@ export function SheetScreen({
   disableRootScale = false,
   disableSheetContentResizeOnDragDown = false,
 }: Props) {
-  const { setScale, resizeType, isWebEnabled } = useSheet()
+  const { setScale, resizeType, enableForWeb } = useSheet()
   const translateY = useSharedValue(0)
   const translateX = useSharedValue(0)
   const opacity = useSharedValue(1)
   const borderRadius = useSharedValue(initialBorderRadius)
   const hasPassedThreshold = useSharedValue(false)
   const previousTranslation = useSharedValue(0)
+  const isMounted = useSharedValue(true)
 
   const shouldEnableScale = Platform.OS === 'ios' && !disableRootScale
+
+  useEffect(() => {
+    return () => {
+      isMounted.value = false
+      cancelAnimation(translateY)
+      cancelAnimation(translateX)
+      cancelAnimation(opacity)
+      cancelAnimation(borderRadius)
+    }
+  }, [])
+
+  const updateScale = React.useCallback((newScale: number) => {
+    if (Platform.OS === 'android' || !isMounted.value) {
+      return
+    }
+    setScale(newScale)
+  }, [setScale])
 
   useEffect(() => {
     if (!shouldEnableScale) {
@@ -86,7 +107,7 @@ export function SheetScreen({
     }
 
     const initialScale = resizeType === 'incremental' ? 1.15 : scaleFactor
-    if (onOpenStart) runOnJS(onOpenStart)()
+    if (onOpenStart) onOpenStart()
     setScale(initialScale)
     setTimeout(() => {
       if (onOpenEnd) onOpenEnd()
@@ -98,11 +119,13 @@ export function SheetScreen({
     () => Gesture.Pan()
       .onStart(() => {
         'worklet'
+        if (!isMounted.value) return
         hasPassedThreshold.value = false
         previousTranslation.value = 0
       })
       .onUpdate((event) => {
         'worklet'
+        if (!isMounted.value) return
         const { translationX, translationY } = event
 
         if (dragDirections.toBottom || dragDirections.toTop) {
@@ -129,9 +152,10 @@ export function SheetScreen({
         const progress = Math.min(translation / (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1)
         
         if (!disableSyncScaleOnDragDown && shouldEnableScale) {
-          setScale(resizeType === 'incremental' 
+          const newScale = resizeType === 'incremental' 
             ? 1.15 - (progress * 0.15)
-            : scaleFactor + (progress * (1 - scaleFactor)))
+            : scaleFactor + (progress * (1 - scaleFactor))
+          runOnJS(updateScale)(newScale)
         }
 
         if (opacityOnGestureMove) {
@@ -145,6 +169,7 @@ export function SheetScreen({
       })
       .onEnd((event) => {
         'worklet'
+        if (!isMounted.value) return
         const { velocityX, velocityY, translationX, translationY } = event
         const velocity = Math.max(Math.abs(velocityX), Math.abs(velocityY))
         const translation = Math.max(Math.abs(translationX), Math.abs(translationY))
@@ -166,7 +191,7 @@ export function SheetScreen({
           opacity.value = withSpring(0)
           borderRadius.value = withSpring(0)
           if (shouldEnableScale) {
-            setScale(1)
+            runOnJS(updateScale)(1)
           }
           runOnJS(onCloseEnd)()
         } else {
@@ -181,14 +206,16 @@ export function SheetScreen({
           opacity.value = withSpring(1)
           borderRadius.value = withSpring(initialBorderRadius)
           if (shouldEnableScale) {
-            setScale(resizeType === 'incremental' ? 1.15 : scaleFactor)
+            runOnJS(updateScale)(resizeType === 'incremental' ? 1.15 : scaleFactor)
           }
         }
       })
-    , [dragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale]
+    , [dragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale]
   )
 
   const animatedStyle = useAnimatedStyle(() => {
+    if (!isMounted.value) return {}
+    
     const scale = disableSheetContentResizeOnDragDown ? 1 : interpolate(
       Math.max(Math.abs(translateY.value), Math.abs(translateX.value)),
       [0, dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH],
@@ -216,7 +243,7 @@ export function SheetScreen({
     bottom: 0,
   }))
 
-  if (Platform.OS === 'web' && !isWebEnabled) {
+  if (!enableForWeb) {
     return (
       <View style={StyleSheet.absoluteFill}>
         {customBackground && (
