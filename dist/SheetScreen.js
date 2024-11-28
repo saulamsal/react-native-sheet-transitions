@@ -36,10 +36,10 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
     stiffness: 90,
     mass: 0.8,
 }, dragDirections = {
-    top: false,
-    bottom: true,
-    left: false,
-    right: false
+    toTop: false,
+    toBottom: true,
+    toLeft: false,
+    toRight: false
 }, style, opacityOnGestureMove = false, containerRadiusSync = true, initialBorderRadius = 50, }) {
     const { setScale, resizeType } = (0, SheetProvider_1.useSheet)();
     const translateY = (0, react_native_reanimated_1.useSharedValue)(0);
@@ -52,21 +52,21 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         return () => setScale(1);
     }, [scaleFactor, resizeType]);
     const animatedStyle = (0, react_native_reanimated_1.useAnimatedStyle)(() => {
-        const scale = (0, react_native_reanimated_1.interpolate)(Math.max(Math.abs(translateY.value), Math.abs(translateX.value)), [0, dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH], resizeType === 'incremental'
+        const scale = (0, react_native_reanimated_1.interpolate)(Math.max(Math.abs(translateY.value), Math.abs(translateX.value)), [0, dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH], resizeType === 'incremental'
             ? [1.15, 1] // Start big, scale down to normal
             : [1, 0.85], // Start normal, scale down
         react_native_reanimated_1.Extrapolate.CLAMP);
         // Calculate progress for border radius
         const progress = Math.min(Math.max(Math.abs(translateY.value), Math.abs(translateX.value)) /
-            (dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1);
+            (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1);
         // Sync border radius with gesture if enabled
         if (containerRadiusSync) {
             borderRadius.value = (0, react_native_reanimated_1.interpolate)(progress, [0, 1], [initialBorderRadius, 0], react_native_reanimated_1.Extrapolate.CLAMP);
         }
         return {
             transform: [
-                { translateY: dragDirections.bottom || dragDirections.top ? translateY.value : 0 },
-                { translateX: dragDirections.left || dragDirections.right ? translateX.value : 0 },
+                { translateY: dragDirections.toBottom || dragDirections.toTop ? translateY.value : 0 },
+                { translateX: dragDirections.toLeft || dragDirections.toRight ? translateX.value : 0 },
                 { scale }
             ],
             opacity: opacity.value,
@@ -83,20 +83,20 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         .onUpdate((event) => {
         'worklet';
         const { translationX, translationY } = event;
-        if (dragDirections.bottom && translationY > 0) {
+        if (dragDirections.toBottom && translationY > 0) {
             translateY.value = translationY;
         }
-        else if (dragDirections.top && translationY < 0) {
+        else if (dragDirections.toTop && translationY < 0) {
             translateY.value = translationY;
         }
-        if (dragDirections.right && translationX > 0) {
+        if (dragDirections.toRight && translationX > 0) {
             translateX.value = translationX;
         }
-        else if (dragDirections.left && translationX < 0) {
+        else if (dragDirections.toLeft && translationX < 0) {
             translateX.value = translationX;
         }
         const progress = Math.min(Math.max(Math.abs(translationY), Math.abs(translationX)) /
-            (dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1);
+            (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1);
         const newScale = resizeType === 'incremental'
             ? 1.15 - (progress * 0.15) // Start at 1.15, scale down to 1
             : scaleFactor + (progress * (1 - scaleFactor)); // Start at scaleFactor, scale up to 1
@@ -114,9 +114,9 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         const shouldClose = translation > dragThreshold ||
             (velocity > 500 && translation > 50);
         if (shouldClose) {
-            const finalTranslation = dragDirections.bottom ? SCREEN_HEIGHT : SCREEN_WIDTH;
-            translateY.value = (0, react_native_reanimated_1.withSpring)(dragDirections.bottom ? finalTranslation : 0, Object.assign({ velocity: velocityY }, springConfig));
-            translateX.value = (0, react_native_reanimated_1.withSpring)(dragDirections.right ? finalTranslation : 0, Object.assign({ velocity: velocityX }, springConfig));
+            const finalTranslation = dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH;
+            translateY.value = (0, react_native_reanimated_1.withSpring)(dragDirections.toBottom ? finalTranslation : 0, Object.assign({ velocity: velocityY }, springConfig));
+            translateX.value = (0, react_native_reanimated_1.withSpring)(dragDirections.toRight ? finalTranslation : 0, Object.assign({ velocity: velocityX }, springConfig));
             opacity.value = (0, react_native_reanimated_1.withSpring)(0);
             borderRadius.value = (0, react_native_reanimated_1.withSpring)(0);
             setScale(1);

@@ -35,6 +35,7 @@ export function SheetScreen({
   opacityOnGestureMove = false,
   containerRadiusSync = true,
   initialBorderRadius = 50,
+  disableSyncScaleOnDragDown = false,
 }: SheetScreenProps) {
   const { setScale, resizeType } = useSheet()
   const translateY = useSharedValue(0)
@@ -115,13 +116,13 @@ export function SheetScreen({
         1
       )
       
-      const newScale = resizeType === 'incremental' 
-        ? 1.15 - (progress * 0.15) // Start at 1.15, scale down to 1
-        : scaleFactor + (progress * (1 - scaleFactor)) // Start at scaleFactor, scale up to 1
-      
-      setScale(newScale)
+      if (!disableSyncScaleOnDragDown) {
+        const newScale = resizeType === 'incremental' 
+          ? 1.15 - (progress * 0.15)
+          : scaleFactor + (progress * (1 - scaleFactor))
+        setScale(newScale)
+      }
 
-      // Update opacity based on gesture if enabled
       if (opacityOnGestureMove) {
         opacity.value = interpolate(
           progress * SCREEN_HEIGHT,

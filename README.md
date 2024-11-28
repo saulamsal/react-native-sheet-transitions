@@ -88,6 +88,7 @@ export default function ModalScreen() {
 | `containerRadiusSync` | `boolean` | `true` | Sync border radius with drag |
 | `initialBorderRadius` | `number` | `50` | Initial border radius value |
 | `style` | `ViewStyle` | undefined | Additional container styles |
+| `disableSyncScaleOnDragDown` | `boolean` | `false` | Disable scale sync during drag |
 
 ### Types
 

@@ -1,6 +1,19 @@
 {
   "name": "react-native-sheet-transitions",
   "version": "0.1.0",
+  "description": "Sheet transitions for React Native",
+  "author": "Saúl Sharma",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saulamsal/react-native-sheet-transitions.git"
+  },
+  "keywords": [
+    "react-native",
+    "sheet",
+    "transitions",
+    "animation"
+  ],
   "main": "src/index.ts",
   "module": "src/index.ts",
   "types": "src/index.ts",
