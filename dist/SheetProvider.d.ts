@@ -4,7 +4,7 @@ interface SheetContextType {
     scale: Animated.SharedValue<number>;
     setScale: (scale: number) => void;
     resizeType: 'incremental' | 'decremental';
-    isWebEnabled: boolean;
+    enableForWeb: boolean;
 }
 interface SheetProviderProps {
     children: React.ReactNode;

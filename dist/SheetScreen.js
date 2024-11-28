@@ -42,8 +42,8 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
     toBottom: true,
     toLeft: false,
     toRight: false
-}, style, opacityOnGestureMove = false, containerRadiusSync = true, initialBorderRadius = 50, disableSyncScaleOnDragDown = false, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd = onClose, onBelowThreshold, disableRootScale = false, disableSheetContentResizeOnDragDown = false, }) {
-    const { setScale, resizeType, isWebEnabled } = (0, SheetProvider_1.useSheet)();
+}, style, opacityOnGestureMove = false, containerRadiusSync = true, initialBorderRadius = 50, disableSyncScaleOnDragDown = false, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd = onClose, onBelowThreshold, disableRootScale = false, disableSheetContentResizeOnDragDown = false, scrollY, isScrollable = false, contentHeight, containerHeight, }) {
+    const { setScale, resizeType, enableForWeb } = (0, SheetProvider_1.useSheet)();
     const translateY = (0, react_native_reanimated_1.useSharedValue)(0);
     const translateX = (0, react_native_reanimated_1.useSharedValue)(0);
     const opacity = (0, react_native_reanimated_1.useSharedValue)(1);
@@ -65,9 +65,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         if (react_native_1.Platform.OS === 'android' || !isMounted.value) {
             return;
         }
-        requestAnimationFrame(() => {
-            setScale(newScale);
-        });
+        setScale(newScale);
     }, [setScale]);
     (0, react_1.useEffect)(() => {
         if (!shouldEnableScale) {
@@ -94,14 +92,38 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         hasPassedThreshold.value = false;
         previousTranslation.value = 0;
     })
+        .simultaneousWithExternalGesture(react_native_gesture_handler_1.Gesture.Native())
         .onUpdate((event) => {
         'worklet';
         if (!isMounted.value)
             return;
         const { translationX, translationY } = event;
-        if (dragDirections.toBottom || dragDirections.toTop) {
-            translateY.value = dragDirections.toBottom && translationY > 0 ? translationY :
-                dragDirections.toTop && translationY < 0 ? translationY : 0;
+        if (isScrollable && scrollY && contentHeight && containerHeight) {
+            const isAtTop = scrollY.value === 0;
+            const isAtBottom = scrollY.value + containerHeight.value >= contentHeight.value;
+            const isScrollingDown = translationY > 0;
+            const isScrollingUp = translationY < 0;
+            // Allow drag down only at top of scroll
+            if (isScrollingDown && isAtTop) {
+                if (dragDirections.toBottom) {
+                    translateY.value = translationY;
+                }
+            }
+            // Allow drag up only at bottom of scroll
+            else if (isScrollingUp && isAtBottom) {
+                if (dragDirections.toTop) {
+                    translateY.value = translationY;
+                }
+            }
+        }
+        else {
+            // Non-scrollable content - use original drag logic
+            if (dragDirections.toBottom && translationY > 0) {
+                translateY.value = translationY;
+            }
+            else if (dragDirections.toTop && translationY < 0) {
+                translateY.value = translationY;
+            }
         }
         if (dragDirections.toRight || dragDirections.toLeft) {
             translateX.value = dragDirections.toRight && translationX > 0 ? translationX :
@@ -125,8 +147,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
             const newScale = resizeType === 'incremental'
                 ? 1.15 - (progress * 0.15)
                 : scaleFactor + (progress * (1 - scaleFactor));
-            const easedScale = Math.sin(newScale * Math.PI / 2) * newScale;
-            (0, react_native_reanimated_1.runOnJS)(updateScale)(easedScale);
+            (0, react_native_reanimated_1.runOnJS)(updateScale)(newScale);
         }
         if (opacityOnGestureMove) {
             opacity.value = (0, react_native_reanimated_1.interpolate)(progress * SCREEN_HEIGHT, [0, SCREEN_HEIGHT * 0.5], [1, 0.5], react_native_reanimated_1.Extrapolate.CLAMP);
@@ -161,7 +182,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
                 (0, react_native_reanimated_1.runOnJS)(updateScale)(resizeType === 'incremental' ? 1.15 : scaleFactor);
             }
         }
-    }), [dragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale]);
+    }), [dragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale, scrollY, contentHeight, containerHeight, isScrollable]);
     const animatedStyle = (0, react_native_reanimated_1.useAnimatedStyle)(() => {
         if (!isMounted.value)
             return {};
@@ -184,7 +205,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         right: 0,
         bottom: 0,
     }));
-    if (react_native_1.Platform.OS === 'web' && !isWebEnabled) {
+    if (!enableForWeb) {
         return (<react_native_1.View style={react_native_1.StyleSheet.absoluteFill}>
         {customBackground && (<react_native_1.View style={react_native_1.StyleSheet.absoluteFill}>
             {customBackground}
@@ -209,6 +230,6 @@ exports.SheetScreen = SheetScreen;
 const styles = react_native_1.StyleSheet.create({
     container: {
         flex: 1,
-        overflow: 'hidden',
+        overflow: 'hidden'
     }
 });

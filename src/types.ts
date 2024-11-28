@@ -35,4 +35,11 @@ export interface SheetScreenProps {
   initialBorderRadius?: number
   disableSyncScaleOnDragDown?: boolean
   customBackground?: React.ReactNode
+  detents?: Detent[]
+  initialDetent?: 'large' | 'medium' | 'small'
+}
+
+export interface Detent {
+  type: 'large' | 'medium' | 'small'
+  value: number
 } 

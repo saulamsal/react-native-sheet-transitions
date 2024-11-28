@@ -1,4 +1,5 @@
 import React from 'react';
+import Animated from 'react-native-reanimated';
 import type { SpringConfig, DragDirections } from './types';
 interface Props {
     children: React.ReactNode;
@@ -20,6 +21,10 @@ interface Props {
     onBelowThreshold?: () => void;
     disableRootScale?: boolean;
     disableSheetContentResizeOnDragDown?: boolean;
+    scrollY?: Animated.SharedValue<number>;
+    isScrollable?: boolean;
+    contentHeight?: Animated.SharedValue<number>;
+    containerHeight?: Animated.SharedValue<number>;
 }
-export declare function SheetScreen({ children, onClose, scaleFactor, dragThreshold, springConfig, dragDirections, style, opacityOnGestureMove, containerRadiusSync, initialBorderRadius, disableSyncScaleOnDragDown, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd, onBelowThreshold, disableRootScale, disableSheetContentResizeOnDragDown, }: Props): React.JSX.Element;
+export declare function SheetScreen({ children, onClose, scaleFactor, dragThreshold, springConfig, dragDirections, style, opacityOnGestureMove, containerRadiusSync, initialBorderRadius, disableSyncScaleOnDragDown, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd, onBelowThreshold, disableRootScale, disableSheetContentResizeOnDragDown, scrollY, isScrollable, contentHeight, containerHeight, }: Props): React.JSX.Element;
 export {};

@@ -32,7 +32,10 @@ function SheetProvider({ children, resizeType = 'decremental', enableForWeb = fa
     const scale = (0, react_native_reanimated_1.useSharedValue)(1);
     const isMounted = (0, react_native_reanimated_1.useSharedValue)(false);
     (0, react_1.useEffect)(() => {
-        isMounted.value = true;
+        // Delay setting isMounted to ensure view is ready
+        requestAnimationFrame(() => {
+            isMounted.value = true;
+        });
         return () => {
             isMounted.value = false;
             (0, react_native_reanimated_1.cancelAnimation)(scale);
@@ -46,9 +49,11 @@ function SheetProvider({ children, resizeType = 'decremental', enableForWeb = fa
             return;
         }
         scale.value = (0, react_native_reanimated_1.withSpring)(newScale, {
-            damping: 15,
-            stiffness: 60,
-            mass: 0.6,
+            damping: 20,
+            stiffness: 300,
+            mass: 0.3,
+            restDisplacementThreshold: 0.01,
+            restSpeedThreshold: 0.01,
         });
     }, []);
     const animatedStyle = (0, react_native_reanimated_1.useAnimatedStyle)(() => {
@@ -58,26 +63,34 @@ function SheetProvider({ children, resizeType = 'decremental', enableForWeb = fa
             transform: [{ scale: scale.value }],
         };
     }, []);
-    const isWebEnabled = react_native_1.Platform.OS === 'web' ? enableForWeb : true;
-    if (react_native_1.Platform.OS === 'web' && enableForWeb && __DEV__) {
-        console.warn('[SheetProvider] Sheet transitions on web are not recommended for optimal UX. ' +
-            'Consider using native web modals or dialogs for better accessibility and user experience.');
-    }
+    const isEnabled = react_native_1.Platform.OS === 'web' ? enableForWeb : true;
     return (<SheetContext.Provider value={{
             scale,
             setScale,
             resizeType,
-            isWebEnabled
+            enableForWeb: isEnabled
         }}>
+      {/* <View style={{ flex: 1, backgroundColor: 'red',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: -1
+           }}/> */}
+
       <react_native_reanimated_1.default.View style={[
             {
                 flex: 1,
                 backfaceVisibility: 'hidden',
             },
             react_native_1.Platform.OS === 'ios' ? animatedStyle : null
-        ]}>
+        ]} collapsable={false}>
+
         {children}
+
       </react_native_reanimated_1.default.View>
+
     </SheetContext.Provider>);
 }
 exports.SheetProvider = SheetProvider;

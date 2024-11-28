@@ -17,7 +17,7 @@ const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH = Dimensions.get('window').width
 
 interface Props {
-  children: React.ReactNode
+  children: React.ReactNode 
   onClose: () => void
   scaleFactor?: number
   dragThreshold?: number
@@ -129,15 +129,24 @@ export function SheetScreen({
         const { translationX, translationY } = event
 
         if (dragDirections.toBottom || dragDirections.toTop) {
-          translateY.value = dragDirections.toBottom && translationY > 0 ? translationY : 
-                           dragDirections.toTop && translationY < 0 ? translationY : 0
+          if ((dragDirections.toBottom && translationY > 0) || 
+              (dragDirections.toTop && translationY < 0)) {
+            translateY.value = translationY
+          }
         }
+        
         if (dragDirections.toRight || dragDirections.toLeft) {
-          translateX.value = dragDirections.toRight && translationX > 0 ? translationX :
-                           dragDirections.toLeft && translationX < 0 ? translationX : 0
+          if ((dragDirections.toRight && translationX > 0) || 
+              (dragDirections.toLeft && translationX < 0)) {
+            translateX.value = translationX
+          }
         }
 
-        const translation = Math.max(Math.abs(translationY), Math.abs(translationX))
+        const translation = Math.max(
+          dragDirections.toBottom || dragDirections.toTop ? Math.abs(translationY) : 0,
+          dragDirections.toLeft || dragDirections.toRight ? Math.abs(translationX) : 0
+        )
+        
         const willClose = translation > dragThreshold
 
         if (willClose !== hasPassedThreshold.value) {
@@ -174,9 +183,18 @@ export function SheetScreen({
         const velocity = Math.max(Math.abs(velocityX), Math.abs(velocityY))
         const translation = Math.max(Math.abs(translationX), Math.abs(translationY))
         
+        const isClosingAllowed = (
+          (translationY > 0 && dragDirections.toBottom) ||
+          (translationY < 0 && dragDirections.toTop) ||
+          (translationX > 0 && dragDirections.toRight) ||
+          (translationX < 0 && dragDirections.toLeft)
+        )
+
         const shouldClose = 
-          translation > dragThreshold || 
-          (velocity > 500 && translation > 50)
+          isClosingAllowed && (
+            translation > dragThreshold || 
+            (velocity > 500 && translation > 50)
+          )
         
         if (shouldClose) {
           const finalTranslation = dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH
@@ -277,6 +295,6 @@ export function SheetScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    overflow: 'hidden',
+    overflow: 'hidden'
   }
 }) 
