@@ -74,6 +74,7 @@ export default function ModalScreen() {
 |------|------|---------|-------------|
 | `springConfig` | `SpringConfig` | `{ damping: 15, stiffness: 150, mass: 0.5 }` | Spring animation configuration |
 | `resizeType` | `'incremental' \| 'decremental'` | `'decremental'` | Scale animation mode |
+| `enableForWeb` | `boolean` | `false` | Enable animations on web platform (not recommended) |
 
 ### SheetScreen Props
 
@@ -296,3 +297,23 @@ The background scaling effect (where the previous screen scales down when the sh
   <Content />
 </SheetScreen>
 ```
+
+## Web Platform Support ⚠️
+
+By default, sheet transitions are disabled on web platforms for better UX and accessibility. Web modals should follow web platform conventions.
+
+If you need to enable animations on web:
+
+```tsx
+<SheetProvider enableForWeb={true}>
+  <App />
+</SheetProvider>
+```
+
+> **Note**: Enabling sheet transitions on web is not recommended as it can:
+> - Interfere with native web accessibility features
+> - Create inconsistent UX across different browsers
+> - Impact performance on lower-end devices
+> - Break expected web modal behaviors
+>
+> Consider using native web modals or dialogs for better user experience on web platforms.

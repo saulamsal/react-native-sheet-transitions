@@ -67,7 +67,7 @@ export function SheetScreen({
   disableRootScale = false,
   disableSheetContentResizeOnDragDown = false,
 }: SheetScreenProps) {
-  const { setScale, resizeType } = useSheet()
+  const { setScale, resizeType, isWebEnabled } = useSheet()
   const translateY = useSharedValue(0)
   const translateX = useSharedValue(0)
   const opacity = useSharedValue(1)
@@ -215,6 +215,21 @@ export function SheetScreen({
     right: 0,
     bottom: 0,
   }))
+
+  if (Platform.OS === 'web' && !isWebEnabled) {
+    return (
+      <View style={StyleSheet.absoluteFill}>
+        {customBackground && (
+          <View style={StyleSheet.absoluteFill}>
+            {customBackground}
+          </View>
+        )}
+        <View style={[styles.container, style]}>
+          {children}
+        </View>
+      </View>
+    )
+  }
 
   return (
     <View style={StyleSheet.absoluteFill}>
