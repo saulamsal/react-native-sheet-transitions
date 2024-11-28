@@ -89,6 +89,7 @@ export default function ModalScreen() {
 | `initialBorderRadius` | `number` | `50` | Initial border radius value |
 | `style` | `ViewStyle` | undefined | Additional container styles |
 | `disableSyncScaleOnDragDown` | `boolean` | `false` | Disable scale sync during drag |
+| `customBackground` | `ReactNode` | undefined | Custom background component with fade animation |
 
 ### Types
 
@@ -153,6 +154,32 @@ Background scales up instead of down:
   <Content />
 </SheetScreen>
 ```
+
+### Custom Background
+
+You can add a custom background component that fades in/out with the modal:
+
+```tsx
+import { BlurView } from 'expo-blur'
+
+<SheetScreen 
+  customBackground={
+    <BlurView 
+      intensity={20} 
+      style={StyleSheet.absoluteFill}
+    />
+  }
+  onClose={handleClose}
+>
+  <Content />
+</SheetScreen>
+```
+
+The background component will:
+- Fade in when modal opens
+- Fade out when modal closes
+- Be positioned absolutely behind the modal content
+- Not sync opacity with drag gestures
 
 ## Expo Router Integration 🔗
 

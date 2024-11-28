@@ -33,4 +33,5 @@ export interface SheetScreenProps {
   containerRadiusSync?: boolean
   initialBorderRadius?: number
   disableSyncScaleOnDragDown?: boolean
+  customBackground?: React.ReactNode
 } 

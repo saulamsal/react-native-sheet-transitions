@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Dimensions, StyleSheet } from 'react-native'
+import { Dimensions, StyleSheet, View } from 'react-native'
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -36,6 +36,7 @@ export function SheetScreen({
   containerRadiusSync = true,
   initialBorderRadius = 50,
   disableSyncScaleOnDragDown = false,
+  customBackground,
 }: SheetScreenProps) {
   const { setScale, resizeType } = useSheet()
   const translateY = useSharedValue(0)
@@ -171,12 +172,28 @@ export function SheetScreen({
       }
     })
 
+  const backgroundStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  }))
+
   return (
-    <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.container, style, animatedStyle]}>
-        {children}
-      </Animated.View>
-    </GestureDetector>
+    <View style={StyleSheet.absoluteFill}>
+      {customBackground && (
+        <Animated.View style={backgroundStyle}>
+          {customBackground}
+        </Animated.View>
+      )}
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={[styles.container, style, animatedStyle]}>
+          {children}
+        </Animated.View>
+      </GestureDetector>
+    </View>
   )
 }
 
