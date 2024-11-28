@@ -5,7 +5,7 @@ Beautiful iOS-like sheet transitions for React Native and Expo apps. Provides sm
 ## Features ✨
 
 - 🔄 Smooth scale transitions
-- 👆 Gesture-based dismissal
+- 👆 Gesture-based dismissal with haptic feedback
 - 📱 iOS-like modal animations
 - 🎨 Customizable animations
 - 🌗 Two animation modes: incremental & decremental
@@ -90,6 +90,12 @@ export default function ModalScreen() {
 | `style` | `ViewStyle` | undefined | Additional container styles |
 | `disableSyncScaleOnDragDown` | `boolean` | `false` | Disable scale sync during drag |
 | `customBackground` | `ReactNode` | undefined | Custom background component with fade animation |
+| `onOpenStart` | `() => void` | undefined | Called when sheet starts opening animation |
+| `onOpenEnd` | `() => void` | undefined | Called when sheet opening animation completes |
+| `onCloseStart` | `() => void` | undefined | Called when user gesture triggers close |
+| `onCloseEnd` | `() => void` | undefined | Called when close animation completes (replaces onClose if provided) |
+| `disableRootScale` | `boolean` | `false` | Disable background scaling effect. Note: Background scaling is only available on iOS by default |
+| `disableSheetContentResizeOnDragDown` | `boolean` | `false` | Disable sheet content scaling during drag down |
 
 ### Types
 
@@ -228,3 +234,65 @@ Pull requests are welcome! For major changes:
 ## License 📄
 
 MIT © saulamsal
+
+## Lifecycle Callbacks
+
+The SheetScreen component provides several callbacks for precise control:
+
+```typescript
+interface SheetScreenProps {
+  // Called when sheet starts opening animation
+  onOpenStart?: () => void
+  
+  // Called when sheet opening animation completes
+  onOpenEnd?: () => void
+  
+  // Called when user drags above threshold
+  onCloseStart?: () => void
+  
+  // Called when user drags below threshold
+  onBelowThreshold?: () => void
+  
+  // Called when close animation completes
+  onCloseEnd?: () => void
+}
+```
+
+### Example with Haptic Feedback
+
+```typescript
+<SheetScreen
+  onCloseStart={() => {
+    // Warn user they can release to close
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+  }}
+  onBelowThreshold={() => {
+    // Reset state when going below threshold
+  }}
+  onCloseEnd={() => {
+    // Success haptic when sheet closes
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    router.back()
+  }}
+>
+  {/* content */}
+</SheetScreen>
+```
+
+## Platform Specific Behavior 📱
+
+### Background Scaling
+
+The background scaling effect (where the previous screen scales down when the sheet opens) is:
+- ✅ Enabled by default on iOS
+- ❌ Disabled by default on Android and Web
+- Can be disabled on iOS using `disableRootScale={true}`
+
+```tsx
+<SheetScreen 
+  disableRootScale={true}  // Disable background scaling even on iOS
+  onClose={handleClose}
+>
+  <Content />
+</SheetScreen>
+```
