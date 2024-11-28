@@ -28,4 +28,6 @@ export interface SheetScreenProps {
     opacityOnGestureMove?: boolean;
     containerRadiusSync?: boolean;
     initialBorderRadius?: number;
+    disableSyncScaleOnDragDown?: boolean;
+    customBackground?: React.ReactNode;
 }

@@ -317,3 +317,14 @@ If you need to enable animations on web:
 > - Break expected web modal behaviors
 >
 > Consider using native web modals or dialogs for better user experience on web platforms.
+
+
+
+## TODO
+
+- [ ] iOS-like sheet detents (snap points) with configurable positions
+  - Support for small, medium, large detents
+  - Custom snap point values
+  - Default snap point configuration
+  - Smooth animations between detents
+

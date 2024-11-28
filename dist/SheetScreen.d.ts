@@ -1,3 +1,25 @@
 import React from 'react';
-import type { SheetScreenProps } from './types';
-export declare function SheetScreen({ children, onClose, scaleFactor, dragThreshold, springConfig, dragDirections, style, opacityOnGestureMove, containerRadiusSync, initialBorderRadius, }: SheetScreenProps): React.JSX.Element;
+import type { SpringConfig, DragDirections } from './types';
+interface Props {
+    children: React.ReactNode;
+    onClose: () => void;
+    scaleFactor?: number;
+    dragThreshold?: number;
+    springConfig?: SpringConfig;
+    dragDirections?: DragDirections;
+    style?: any;
+    opacityOnGestureMove?: boolean;
+    containerRadiusSync?: boolean;
+    initialBorderRadius?: number;
+    disableSyncScaleOnDragDown?: boolean;
+    customBackground?: React.ReactNode;
+    onOpenStart?: () => void;
+    onOpenEnd?: () => void;
+    onCloseStart?: () => void;
+    onCloseEnd?: () => void;
+    onBelowThreshold?: () => void;
+    disableRootScale?: boolean;
+    disableSheetContentResizeOnDragDown?: boolean;
+}
+export declare function SheetScreen({ children, onClose, scaleFactor, dragThreshold, springConfig, dragDirections, style, opacityOnGestureMove, containerRadiusSync, initialBorderRadius, disableSyncScaleOnDragDown, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd, onBelowThreshold, disableRootScale, disableSheetContentResizeOnDragDown, }: Props): React.JSX.Element;
+export {};

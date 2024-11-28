@@ -10,12 +10,12 @@ import Animated, {
 } from 'react-native-reanimated'
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { useSheet } from './SheetProvider'
-import type { SheetScreenProps, SpringConfig, DragDirections } from './types'
+import type { SpringConfig, DragDirections } from './types'
 
 const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH = Dimensions.get('window').width
 
-interface SheetScreenProps {
+interface Props {
   children: React.ReactNode
   onClose: () => void
   scaleFactor?: number
@@ -66,7 +66,7 @@ export function SheetScreen({
   onBelowThreshold,
   disableRootScale = false,
   disableSheetContentResizeOnDragDown = false,
-}: SheetScreenProps) {
+}: Props) {
   const { setScale, resizeType, isWebEnabled } = useSheet()
   const translateY = useSharedValue(0)
   const translateX = useSharedValue(0)
