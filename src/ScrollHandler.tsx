@@ -3,7 +3,6 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
   runOnJS,
-  SharedValue,
 } from 'react-native-reanimated'
 
 interface Props {
@@ -15,14 +14,14 @@ interface Props {
     velocity: number
   }) => void
   panGesture: Gesture
-  isScrolling: SharedValue<boolean>
   style?: any
 }
 
 export const ScrollHandler = React.forwardRef<Animated.ScrollView, Props>((props, ref) => {
-  const { children, onScrollStateChange, panGesture, isScrolling, style } = props
+  const { children, onScrollStateChange, panGesture, style } = props
 
   const scrollY = useSharedValue(0)
+  const isScrolling = useSharedValue(false)
   const isDragging = useSharedValue(false)
 
   const scrollGesture = Gesture.Native()
@@ -32,7 +31,7 @@ export const ScrollHandler = React.forwardRef<Animated.ScrollView, Props>((props
       if (!isDragging.value) {
         runOnJS(onScrollStateChange)?.({
           isAtTop: scrollY.value <= 0,
-          isAtBottom: false,
+          isAtBottom: false, // We'll calculate this properly
           scrollY: scrollY.value,
           velocity: 0
         })
