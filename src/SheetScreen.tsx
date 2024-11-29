@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import { Dimensions, StyleSheet, View, Platform } from 'react-native'
 import Animated, { 
   useSharedValue, 
@@ -12,9 +12,13 @@ import Animated, {
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { useSheet } from './SheetProvider'
 import type { SpringConfig, DragDirections } from './types'
+import { ScrollHandler } from './ScrollHandler'
 
 const SCREEN_HEIGHT = Dimensions.get('window').height
 const SCREEN_WIDTH = Dimensions.get('window').width
+const DIRECTION_LOCK_ANGLE = 30 // Degrees - lower means stricter horizontal requirement
+const VERTICAL_MOVEMENT_THRESHOLD = 5 // Minimum vertical movement to activate strict mode
+const HORIZONTAL_VELOCITY_THRESHOLD = 1.5 // Velocity multiplier for horizontal gesture in strict mode
 
 interface Props {
   children: React.ReactNode 
@@ -80,6 +84,18 @@ export function SheetScreen({
   const hasPassedThreshold = useSharedValue(false)
   const previousTranslation = useSharedValue(0)
   const isMounted = useSharedValue(true)
+  const scrollState = useSharedValue({
+    isAtTop: true,
+    isAtBottom: false,
+    scrollY: 0,
+    velocity: 0
+  })
+  const isDragging = useSharedValue(false)
+  const initialGestureX = useSharedValue(0)
+  const initialGestureY = useSharedValue(0)
+  const isHorizontalGesture = useSharedValue(false)
+  const hasVerticalMovement = useSharedValue(false)
+  const isScrolling = useSharedValue(false)
 
   const shouldEnableScale = Platform.OS === 'ios' && !disableRootScale
 
@@ -119,31 +135,73 @@ export function SheetScreen({
 
   const effectiveDragDirections = React.useMemo(() => ({
     ...dragDirections,
-    toTop: isScrollable ? false : dragDirections.toTop,
-    toBottom: isScrollable ? false : dragDirections.toBottom,
-  }), [dragDirections, isScrollable])
+    toTop: isScrollable ? scrollState.value.isAtBottom : dragDirections.toTop,
+    toBottom: isScrollable ? scrollState.value.isAtTop : dragDirections.toBottom,
+  }), [dragDirections, isScrollable, scrollState.value])
+
+  const handleScrollStateChange = useCallback((state: {
+    isAtTop: boolean
+    isAtBottom: boolean
+    scrollY: number
+    velocity: number
+  }) => {
+    scrollState.value = state
+  }, [])
+
+  const calculateGestureAngle = (x: number, y: number) => {
+    'worklet'
+    return Math.abs(Math.atan2(y, x) * (180 / Math.PI))
+  }
 
   const panGesture = React.useMemo(
     () => Gesture.Pan()
-      .onStart(() => {
+      .onStart((event) => {
         'worklet'
         if (!isMounted.value) return
         hasPassedThreshold.value = false
-        previousTranslation.value = 0
+        isHorizontalGesture.value = false
+        hasVerticalMovement.value = false
+        initialGestureX.value = event.x
+        initialGestureY.value = event.y
+        
+        if (scrollState.value.isAtTop) {
+          isDragging.value = true
+          translateY.value = 0
+        }
       })
       .onUpdate((event) => {
         'worklet'
         if (!isMounted.value) return
         const { translationX, translationY } = event
+        
+        // Check for vertical movement
+        if (Math.abs(translationY) > VERTICAL_MOVEMENT_THRESHOLD) {
+          hasVerticalMovement.value = true
+        }
 
-        if (effectiveDragDirections.toBottom || effectiveDragDirections.toTop) {
+        // Determine if this should be treated as a horizontal gesture
+        if (!isHorizontalGesture.value && !isScrolling.value) {
+          const angle = calculateGestureAngle(translationX, translationY)
+          const isStrictMode = isScrollable && !scrollState.value.isAtTop
+          const angleThreshold = isStrictMode ? DIRECTION_LOCK_ANGLE : 45
+
+          if (Math.abs(translationX) > 10) {
+            if (angle < angleThreshold && (!hasVerticalMovement.value || Math.abs(event.velocityX) > Math.abs(event.velocityY) * HORIZONTAL_VELOCITY_THRESHOLD)) {
+              isHorizontalGesture.value = true
+            }
+          }
+        }
+
+        // Handle vertical gesture
+        if ((scrollState.value.isAtTop || !isScrollable) && isDragging.value && !isHorizontalGesture.value) {
           if ((effectiveDragDirections.toBottom && translationY > 0) || 
               (effectiveDragDirections.toTop && translationY < 0)) {
             translateY.value = translationY
           }
         }
         
-        if (effectiveDragDirections.toRight || effectiveDragDirections.toLeft) {
+        // Handle horizontal gesture
+        if (isHorizontalGesture.value && (effectiveDragDirections.toRight || effectiveDragDirections.toLeft)) {
           if ((effectiveDragDirections.toRight && translationX > 0) || 
               (effectiveDragDirections.toLeft && translationX < 0)) {
             translateX.value = translationX
@@ -186,7 +244,9 @@ export function SheetScreen({
       })
       .onEnd((event) => {
         'worklet'
-        if (!isMounted.value) return
+        isDragging.value = false
+        isHorizontalGesture.value = false
+        hasVerticalMovement.value = false
         const { velocityX, velocityY, translationX, translationY } = event
         const velocity = Math.max(Math.abs(velocityX), Math.abs(velocityY))
         const translation = Math.max(Math.abs(translationX), Math.abs(translationY))
@@ -236,7 +296,7 @@ export function SheetScreen({
           }
         }
       })
-    , [effectiveDragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale]
+    , [effectiveDragDirections, isScrollable, scrollState]
   )
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -269,6 +329,20 @@ export function SheetScreen({
     bottom: 0,
   }))
 
+  const renderContent = () => {
+    if (!isScrollable) return children
+
+    return (
+      <ScrollHandler
+        panGesture={panGesture}
+        onScrollStateChange={handleScrollStateChange}
+        isScrolling={isScrolling}
+      >
+        {children}
+      </ScrollHandler>
+    )
+  }
+
   if (!enableForWeb) {
     return (
       <View style={StyleSheet.absoluteFill}>
@@ -278,7 +352,7 @@ export function SheetScreen({
           </View>
         )}
         <View style={[styles.container, style]}>
-          {children}
+          {renderContent()}
         </View>
       </View>
     )
@@ -293,7 +367,7 @@ export function SheetScreen({
       )}
       <GestureDetector gesture={panGesture}>
         <Animated.View style={[styles.container, style, animatedStyle]}>
-          {children}
+          {renderContent()}
         </Animated.View>
       </GestureDetector>
     </View>

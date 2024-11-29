@@ -12,6 +12,10 @@ Beautiful iOS-like sheet transitions for React Native and Expo apps. Provides sm
 - 🎯 Border radius sync with gestures
 - 🔍 Opacity animations
 - 📐 Multi-directional dragging support
+- 📜 Smart scroll handling with gesture prioritization
+- 🎮 Intelligent gesture detection for scrollable content
+- 🔒 Direction-locked gestures based on scroll position
+- 🎯 Context-aware horizontal gestures (stricter when scrolling)
 
 ## Installation 📦
 
@@ -97,6 +101,9 @@ export default function ModalScreen() {
 | `onCloseEnd` | `() => void` | undefined | Called when close animation completes (replaces onClose if provided) |
 | `disableRootScale` | `boolean` | `false` | Disable background scaling effect. Note: Background scaling is only available on iOS by default |
 | `disableSheetContentResizeOnDragDown` | `boolean` | `false` | Disable sheet content scaling during drag down |
+| `isScrollable` | `boolean` | `false` | Enable smart scroll handling with gesture prioritization |
+| `detents` | `Detent[]` | undefined | Array of snap points for the sheet |
+| `initialDetent` | `'large' \| 'medium' \| 'small'` | undefined | Initial snap point position |
 
 ### Types
 
@@ -298,6 +305,14 @@ The background scaling effect (where the previous screen scales down when the sh
 </SheetScreen>
 ```
 
+### Gesture Handling
+
+Gesture behavior automatically adjusts based on platform and context:
+- iOS-like gesture prioritization
+- Smart scroll vs dismiss detection
+- Context-aware gesture requirements
+- Automatic gesture reset on touch end
+
 ## Web Platform Support ⚠️
 
 By default, sheet transitions are disabled on web platforms for better UX and accessibility. Web modals should follow web platform conventions.
@@ -318,7 +333,47 @@ If you need to enable animations on web:
 >
 > Consider using native web modals or dialogs for better user experience on web platforms.
 
+## Advanced Features 🚀
 
+### Smart Scroll Handling
+
+The sheet implements intelligent gesture handling for scrollable content:
+
+```tsx
+<SheetScreen 
+  isScrollable
+  dragDirections={{
+    toBottom: true,
+    toLeft: true,
+    toRight: true
+  }}
+>
+  <ScrollContent />
+</SheetScreen>
+```
+
+Features:
+- Automatically disables vertical sheet gestures when scrolling
+- Makes horizontal gestures harder to trigger during vertical scrolling
+- Dynamically adjusts gesture requirements based on scroll position
+- Prevents accidental dismissal during content interaction
+
+### Context-Aware Gesture Detection
+
+The sheet implements smart gesture detection that:
+- Requires more precise horizontal movement when content is scrollable
+- Adjusts gesture angle requirements based on scroll position
+- Makes horizontal dismissal harder to trigger during vertical scrolling
+- Automatically resets gesture requirements when touch ends
+
+### Gesture Behavior
+
+Horizontal gestures become more strict when:
+- Content is being scrolled vertically
+- Sheet is not at the top of scrollable content
+- There has been significant vertical movement
+
+This prevents accidental dismissal while maintaining fluid interaction.
 
 ## TODO
 
