@@ -3,17 +3,20 @@ import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import Animated, {
   useSharedValue,
   runOnJS,
+  WithSpringConfig,
 } from 'react-native-reanimated'
+
+interface ScrollState {
+  isAtTop: boolean
+  isAtBottom: boolean
+  scrollY: number
+  velocity: number
+}
 
 interface Props {
   children: React.ReactNode
-  onScrollStateChange?: (state: {
-    isAtTop: boolean
-    isAtBottom: boolean
-    scrollY: number
-    velocity: number
-  }) => void
-  panGesture: Gesture
+  onScrollStateChange?: (state: ScrollState) => void
+  panGesture: ReturnType<typeof Gesture.Pan>
   style?: any
 }
 
@@ -24,14 +27,21 @@ export const ScrollHandler = React.forwardRef<Animated.ScrollView, Props>((props
   const isScrolling = useSharedValue(false)
   const isDragging = useSharedValue(false)
 
+  const handleScrollStateChange = (state: ScrollState) => {
+    'worklet'
+    if (onScrollStateChange) {
+      runOnJS(onScrollStateChange)(state)
+    }
+  }
+
   const scrollGesture = Gesture.Native()
     .onBegin(() => {
       'worklet'
       isScrolling.value = true
       if (!isDragging.value) {
-        runOnJS(onScrollStateChange)?.({
+        handleScrollStateChange({
           isAtTop: scrollY.value <= 0,
-          isAtBottom: false, // We'll calculate this properly
+          isAtBottom: false,
           scrollY: scrollY.value,
           velocity: 0
         })
@@ -56,7 +66,7 @@ export const ScrollHandler = React.forwardRef<Animated.ScrollView, Props>((props
           scrollY.value = contentOffset.y
           
           if (!isDragging.value) {
-            runOnJS(onScrollStateChange)?.({
+            handleScrollStateChange({
               isAtTop: contentOffset.y <= 0,
               isAtBottom: contentOffset.y >= (contentSize.height - layoutMeasurement.height),
               scrollY: contentOffset.y,
