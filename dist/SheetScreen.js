@@ -29,6 +29,7 @@ const react_native_1 = require("react-native");
 const react_native_reanimated_1 = __importStar(require("react-native-reanimated"));
 const react_native_gesture_handler_1 = require("react-native-gesture-handler");
 const SheetProvider_1 = require("./SheetProvider");
+const ScrollHandler_1 = require("./ScrollHandler");
 const SCREEN_HEIGHT = react_native_1.Dimensions.get('window').height;
 const SCREEN_WIDTH = react_native_1.Dimensions.get('window').width;
 function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 150, springConfig = {
@@ -42,7 +43,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
     toBottom: true,
     toLeft: false,
     toRight: false
-}, style, opacityOnGestureMove = false, containerRadiusSync = true, initialBorderRadius = 50, disableSyncScaleOnDragDown = false, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd = onClose, onBelowThreshold, disableRootScale = false, disableSheetContentResizeOnDragDown = false, scrollY, isScrollable = false, contentHeight, containerHeight, }) {
+}, isScrollable = false, style, opacityOnGestureMove = false, containerRadiusSync = true, initialBorderRadius = 50, disableSyncScaleOnDragDown = false, customBackground, onOpenStart, onOpenEnd, onCloseStart, onCloseEnd = onClose, onBelowThreshold, disableRootScale = false, disableSheetContentResizeOnDragDown = false, }) {
     const { setScale, resizeType, enableForWeb } = (0, SheetProvider_1.useSheet)();
     const translateY = (0, react_native_reanimated_1.useSharedValue)(0);
     const translateX = (0, react_native_reanimated_1.useSharedValue)(0);
@@ -51,6 +52,13 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
     const hasPassedThreshold = (0, react_native_reanimated_1.useSharedValue)(false);
     const previousTranslation = (0, react_native_reanimated_1.useSharedValue)(0);
     const isMounted = (0, react_native_reanimated_1.useSharedValue)(true);
+    const scrollState = (0, react_native_reanimated_1.useSharedValue)({
+        isAtTop: true,
+        isAtBottom: false,
+        scrollY: 0,
+        velocity: 0
+    });
+    const isDragging = (0, react_native_reanimated_1.useSharedValue)(false);
     const shouldEnableScale = react_native_1.Platform.OS === 'ios' && !disableRootScale;
     (0, react_1.useEffect)(() => {
         return () => {
@@ -84,52 +92,39 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         }, 300);
         return () => setScale(1);
     }, [scaleFactor, resizeType, shouldEnableScale]);
+    const effectiveDragDirections = react_1.default.useMemo(() => (Object.assign(Object.assign({}, dragDirections), { toTop: isScrollable ? scrollState.value.isAtBottom : dragDirections.toTop, toBottom: isScrollable ? scrollState.value.isAtTop : dragDirections.toBottom })), [dragDirections, isScrollable, scrollState.value]);
+    const handleScrollStateChange = (0, react_1.useCallback)((state) => {
+        scrollState.value = state;
+    }, []);
     const panGesture = react_1.default.useMemo(() => react_native_gesture_handler_1.Gesture.Pan()
         .onStart(() => {
         'worklet';
         if (!isMounted.value)
             return;
         hasPassedThreshold.value = false;
-        previousTranslation.value = 0;
+        if (scrollState.value.isAtTop) {
+            isDragging.value = true;
+            translateY.value = 0;
+        }
     })
-        .simultaneousWithExternalGesture(react_native_gesture_handler_1.Gesture.Native())
         .onUpdate((event) => {
         'worklet';
         if (!isMounted.value)
             return;
         const { translationX, translationY } = event;
-        if (isScrollable && scrollY && contentHeight && containerHeight) {
-            const isAtTop = scrollY.value === 0;
-            const isAtBottom = scrollY.value + containerHeight.value >= contentHeight.value;
-            const isScrollingDown = translationY > 0;
-            const isScrollingUp = translationY < 0;
-            // Allow drag down only at top of scroll
-            if (isScrollingDown && isAtTop) {
-                if (dragDirections.toBottom) {
-                    translateY.value = translationY;
-                }
-            }
-            // Allow drag up only at bottom of scroll
-            else if (isScrollingUp && isAtBottom) {
-                if (dragDirections.toTop) {
-                    translateY.value = translationY;
-                }
-            }
-        }
-        else {
-            // Non-scrollable content - use original drag logic
-            if (dragDirections.toBottom && translationY > 0) {
-                translateY.value = translationY;
-            }
-            else if (dragDirections.toTop && translationY < 0) {
+        if ((scrollState.value.isAtTop || !isScrollable) && isDragging.value) {
+            if ((effectiveDragDirections.toBottom && translationY > 0) ||
+                (effectiveDragDirections.toTop && translationY < 0)) {
                 translateY.value = translationY;
             }
         }
-        if (dragDirections.toRight || dragDirections.toLeft) {
-            translateX.value = dragDirections.toRight && translationX > 0 ? translationX :
-                dragDirections.toLeft && translationX < 0 ? translationX : 0;
+        if (effectiveDragDirections.toRight || effectiveDragDirections.toLeft) {
+            if ((effectiveDragDirections.toRight && translationX > 0) ||
+                (effectiveDragDirections.toLeft && translationX < 0)) {
+                translateX.value = translationX;
+            }
         }
-        const translation = Math.max(Math.abs(translationY), Math.abs(translationX));
+        const translation = Math.max(effectiveDragDirections.toBottom || effectiveDragDirections.toTop ? Math.abs(translationY) : 0, effectiveDragDirections.toLeft || effectiveDragDirections.toRight ? Math.abs(translationX) : 0);
         const willClose = translation > dragThreshold;
         if (willClose !== hasPassedThreshold.value) {
             hasPassedThreshold.value = willClose;
@@ -142,7 +137,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
                     (0, react_native_reanimated_1.runOnJS)(onBelowThreshold)();
             }
         }
-        const progress = Math.min(translation / (dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1);
+        const progress = Math.min(translation / (effectiveDragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH), 1);
         if (!disableSyncScaleOnDragDown && shouldEnableScale) {
             const newScale = resizeType === 'incremental'
                 ? 1.15 - (progress * 0.15)
@@ -155,17 +150,20 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
     })
         .onEnd((event) => {
         'worklet';
-        if (!isMounted.value)
-            return;
+        isDragging.value = false;
         const { velocityX, velocityY, translationX, translationY } = event;
         const velocity = Math.max(Math.abs(velocityX), Math.abs(velocityY));
         const translation = Math.max(Math.abs(translationX), Math.abs(translationY));
-        const shouldClose = translation > dragThreshold ||
-            (velocity > 500 && translation > 50);
+        const isClosingAllowed = ((translationY > 0 && effectiveDragDirections.toBottom) ||
+            (translationY < 0 && effectiveDragDirections.toTop) ||
+            (translationX > 0 && effectiveDragDirections.toRight) ||
+            (translationX < 0 && effectiveDragDirections.toLeft));
+        const shouldClose = isClosingAllowed && (translation > dragThreshold ||
+            (velocity > 500 && translation > 50));
         if (shouldClose) {
-            const finalTranslation = dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH;
-            translateY.value = (0, react_native_reanimated_1.withSpring)(dragDirections.toBottom ? finalTranslation : 0, Object.assign({ velocity: velocityY }, springConfig));
-            translateX.value = (0, react_native_reanimated_1.withSpring)(dragDirections.toRight ? finalTranslation : 0, Object.assign({ velocity: velocityX }, springConfig));
+            const finalTranslation = effectiveDragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH;
+            translateY.value = (0, react_native_reanimated_1.withSpring)(effectiveDragDirections.toBottom ? finalTranslation : 0, Object.assign({ velocity: velocityY }, springConfig));
+            translateX.value = (0, react_native_reanimated_1.withSpring)(effectiveDragDirections.toRight ? finalTranslation : 0, Object.assign({ velocity: velocityX }, springConfig));
             opacity.value = (0, react_native_reanimated_1.withSpring)(0);
             borderRadius.value = (0, react_native_reanimated_1.withSpring)(0);
             if (shouldEnableScale) {
@@ -182,11 +180,11 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
                 (0, react_native_reanimated_1.runOnJS)(updateScale)(resizeType === 'incremental' ? 1.15 : scaleFactor);
             }
         }
-    }), [dragDirections, dragThreshold, onCloseStart, onBelowThreshold, shouldEnableScale, updateScale, scrollY, contentHeight, containerHeight, isScrollable]);
+    }), [effectiveDragDirections, isScrollable, scrollState]);
     const animatedStyle = (0, react_native_reanimated_1.useAnimatedStyle)(() => {
         if (!isMounted.value)
             return {};
-        const scale = disableSheetContentResizeOnDragDown ? 1 : (0, react_native_reanimated_1.interpolate)(Math.max(Math.abs(translateY.value), Math.abs(translateX.value)), [0, dragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH], resizeType === 'incremental' ? [1.15, 1] : [1, 0.85], react_native_reanimated_1.Extrapolate.CLAMP);
+        const scale = disableSheetContentResizeOnDragDown ? 1 : (0, react_native_reanimated_1.interpolate)(Math.max(Math.abs(translateY.value), Math.abs(translateX.value)), [0, effectiveDragDirections.toBottom ? SCREEN_HEIGHT : SCREEN_WIDTH], resizeType === 'incremental' ? [1.15, 1] : [1, 0.85], react_native_reanimated_1.Extrapolate.CLAMP);
         return {
             transform: [
                 { translateY: translateY.value },
@@ -205,13 +203,20 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         right: 0,
         bottom: 0,
     }));
+    const renderContent = () => {
+        if (!isScrollable)
+            return children;
+        return (<ScrollHandler_1.ScrollHandler panGesture={panGesture} onScrollStateChange={handleScrollStateChange}>
+        {children}
+      </ScrollHandler_1.ScrollHandler>);
+    };
     if (!enableForWeb) {
         return (<react_native_1.View style={react_native_1.StyleSheet.absoluteFill}>
         {customBackground && (<react_native_1.View style={react_native_1.StyleSheet.absoluteFill}>
             {customBackground}
           </react_native_1.View>)}
         <react_native_1.View style={[styles.container, style]}>
-          {children}
+          {renderContent()}
         </react_native_1.View>
       </react_native_1.View>);
     }
@@ -221,7 +226,7 @@ function SheetScreen({ children, onClose, scaleFactor = 0.83, dragThreshold = 15
         </react_native_reanimated_1.default.View>)}
       <react_native_gesture_handler_1.GestureDetector gesture={panGesture}>
         <react_native_reanimated_1.default.View style={[styles.container, style, animatedStyle]}>
-          {children}
+          {renderContent()}
         </react_native_reanimated_1.default.View>
       </react_native_gesture_handler_1.GestureDetector>
     </react_native_1.View>);
