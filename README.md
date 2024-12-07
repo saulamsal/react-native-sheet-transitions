@@ -2,6 +2,8 @@
 
 Beautiful iOS-like sheet transitions for React Native and Expo apps. Provides smooth, native-feeling modal transitions with gesture-based interactions.
 
+![Demo](assets/gifs/demo.gif)
+
 ## Features ✨
 
 - 🔄 Smooth scale transitions
@@ -12,6 +14,9 @@ Beautiful iOS-like sheet transitions for React Native and Expo apps. Provides sm
 - 🎯 Border radius sync with gestures
 - 🔍 Opacity animations
 - 📐 Multi-directional dragging support
+
+
+> ⚠️ **Work in Progress**: This package is under active development and not yet recommended for production use. Breaking changes may occur frequently. Feel free to contribute by submitting PRs or reporting issues!
 
 ## Installation 📦
 
