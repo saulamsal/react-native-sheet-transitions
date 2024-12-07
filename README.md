@@ -318,13 +318,32 @@ If you need to enable animations on web:
 >
 > Consider using native web modals or dialogs for better user experience on web platforms.
 
+## Roadmap 🗺️
 
-
-## TODO
-
-- [ ] iOS-like sheet detents (snap points) with configurable positions
-  - Support for small, medium, large detents
+### High Priority
+- [ ] Fix Scrolling gesture handling and momentum issues
+- [ ] Multiple Portal support for nested sheets
+- [ ] iOS-like sheet detents (snap points)
+  - Configurable small, medium, large positions
   - Custom snap point values
   - Default snap point configuration
   - Smooth animations between detents
+  - Gesture-based snapping behavior
+
+### Plans
+- [ ] Enhanced gesture controls
+  - Velocity-based dismissal
+  - Directional lock
+- [ ] Accessibility improvements
+  - Screen reader support
+  - Reduced motion preferences
+  - Focus support
+- [ ] More animations
+  - Shared element transitions
+- [ ] Better web support
+  - Keyboard navigation
+  - Focus trapping
+
+
+
 
