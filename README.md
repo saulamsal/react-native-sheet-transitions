@@ -1,6 +1,6 @@
 # React Native Sheet Transitions 🎭
 
-Beautiful iOS-like sheet transitions for React Native and Expo apps. Provides smooth, native-feeling modal transitions with gesture-based interactions.
+Beautiful iOS-like sheet transitions for React Native, Expo Go, and Web. Provides smooth, native-feeling custom modal transitions with gesture-based interactions.
 
 ![Demo](assets/gifs/demo.gif)
 
@@ -220,13 +220,6 @@ export default function Layout() {
 }
 ```
 
-## Performance Tips 🚀
-
-1. Use `memo` for complex modal content
-2. Keep animations smooth by avoiding heavy computations during gestures
-3. Use `useCallback` for event handlers
-4. Consider using `worklet` functions for performance-critical animations
-
 ## Contributing 🤝
 
 Pull requests are welcome! For major changes:
@@ -237,9 +230,6 @@ Pull requests are welcome! For major changes:
 4. Push to the branch
 5. Open a pull request
 
-## License 📄
-
-MIT © saulamsal
 
 ## Lifecycle Callbacks
 
@@ -350,5 +340,6 @@ If you need to enable animations on web:
   - Focus trapping
 
 
+## License 📄
 
-
+MIT © saulamsal
