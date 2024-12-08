@@ -40,6 +40,8 @@ interface Props {
   disableSheetContentResizeOnDragDown?: boolean
 }
 
+//  TODO; containerRadiusSync = true
+
 export function SheetScreen({
   children,
   onClose,
@@ -61,7 +63,6 @@ export function SheetScreen({
   isScrollable = false,
   style,
   opacityOnGestureMove = false,
-  containerRadiusSync = true,
   initialBorderRadius = 50,
   disableSyncScaleOnDragDown = false,
   customBackground,

@@ -88,8 +88,9 @@ export default function ModalScreen() {
 | `onClose` | `() => void` | required | Callback when sheet is dismissed |
 | `scaleFactor` | `number` | `0.83` | Scale factor for background content |
 | `dragThreshold` | `number` | `150` | Distance required to trigger dismiss |
-| `springConfig` | `SpringConfig` | `{ damping: 20, stiffness: 90, mass: 0.8 }` | Spring animation config |
+| `springConfig` | `SpringConfig` | `{ damping: 15, stiffness: 60, mass: 0.6, restDisplacementThreshold: 0.01, restSpeedThreshold: 0.01 }` | Spring animation config |
 | `dragDirections` | `DragDirections` | `{ toBottom: true }` | Enabled drag directions |
+| `isScrollable` | `boolean` | `false` | Enable scroll handling for content |
 | `opacityOnGestureMove` | `boolean` | `false` | Enable opacity animation during drag |
 | `containerRadiusSync` | `boolean` | `true` | Sync border radius with drag |
 | `initialBorderRadius` | `number` | `50` | Initial border radius value |
@@ -100,7 +101,8 @@ export default function ModalScreen() {
 | `onOpenEnd` | `() => void` | undefined | Called when sheet opening animation completes |
 | `onCloseStart` | `() => void` | undefined | Called when user gesture triggers close |
 | `onCloseEnd` | `() => void` | undefined | Called when close animation completes (replaces onClose if provided) |
-| `disableRootScale` | `boolean` | `false` | Disable background scaling effect. Note: Background scaling is only available on iOS by default |
+| `onBelowThreshold` | `() => void` | undefined | Called when drag goes below threshold after exceeding it |
+| `disableRootScale` | `boolean` | `false` | Disable background scaling effect |
 | `disableSheetContentResizeOnDragDown` | `boolean` | `false` | Disable sheet content scaling during drag down |
 
 ### Types
